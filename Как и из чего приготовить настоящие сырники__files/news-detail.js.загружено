@@ -1,0 +1,201 @@
+$(document).ready(function () {
+// Лайки в новости
+    $('.js-like-up, .js-like-down').on('click', function () {
+        var $likeButton = $(this);
+        var id = $likeButton.data('id');
+        var likeValue = $likeButton.hasClass('js-like-up') ? 1 : -1;
+        var $likeBlock = $likeButton.parent();
+        var $countBlock = $likeBlock.find('.like__count');
+
+        if ($likeButton.hasClass('active')) {
+            $likeButton.removeClass('active');
+            $.get('/comment/delete-like', {id: id}, function () {
+                $.get('/comment/get-likes-count', {id: id}, function (response) {
+                    $countBlock.attr('data-count', response);
+                    $countBlock.text(response);
+                });
+            });
+        } else {
+            $likeBlock.find('.like__btn').removeClass('active');
+            $likeButton.addClass('active');
+            $.get('/comment/set-like', {id: id, likeValue: likeValue}, function () {
+                $.get('/comment/get-likes-count', {id: id}, function (response) {
+                    $countBlock.attr('data-count', response);
+                    $countBlock.text(response);
+                });
+            });
+        }
+    });
+
+    // В контенте новости кнопка "Читать далее"
+    $('.b-detail__read-more').before('<div class="b-detail__read-more-link">Читать далее <div class="button-arrow"></div></div>');
+    $('.b-news').on('click', '.b-detail__read-more-link', function () {
+        $(this).next().show();
+        $(this).hide();
+    });
+
+// Отправить коммент
+    $(".js-comment-form").submit(function (event) {
+        var recaptcha = $(".b-comments__captcha input").val();
+        if (recaptcha == "") {
+            event.preventDefault();
+            alert("Докажите, что Вы не робот :)");
+        }
+    });
+
+// Обновить аватар в форме комментария
+    $('.js-refresh-avatar').on('click', function () {
+        $.get('/comment/get-avatar', function (data) {
+            if (data != '') {
+                var image = $('.js-comment-form-avatar');
+                var imageInput = $('.js-comment-avatar');
+
+                image.fadeOut('fast', function () {
+                    imageInput.val(data);
+                    image.attr('src', data);
+                    image.fadeIn('fast');
+                });
+            }
+        });
+    });
+
+// Ответить в комментах к новости
+    $('.js-answer').on('click', function () {
+        var parent_id = $(this).data('parent');
+        var name = $(this).data('name');
+        var $form = $('.js-comment-form');
+        var $textarea = $('.js-comment-content');
+
+        $('.js-comment-parent').val(parent_id);
+        $textarea.val(name + ', ');
+        $textarea.focus();
+        $(window).scrollTop($form.offset().top - 150);
+    });
+
+// Увеличение картинок по клику внутри новости
+    $('.js-news-inner-img').magnificPopup({
+        type: 'image',
+        closeOnContentClick: true,
+        mainClass: 'mfp-img-mobile',
+        image: {
+            verticalFit: true
+        }
+    });
+
+// Галереи внутри новости
+    $('.js-slider-typography').magnificPopup({
+        delegate: 'a',
+        type: 'image',
+        tClose: 'Закрыть',
+        tLoading: 'Загрузка изображения #%curr%...',
+        mainClass: 'mfp-with-zoom mfp-img-mobile',
+        gallery: {
+            enabled: true,
+            navigateByImgClick: true,
+            preload: [0, 1],
+            tPrev: 'Предыдущая',
+            tNext: 'Следующая',
+            tCounter: '%curr% из %total%'
+        },
+        image: {
+            tError: '<a href="%url%">Изображение #%curr%</a> не может быть загружено.',
+            titleSrc: function (item) {
+                console.log(item);
+                console.log(item.el);
+                return item.el.attr('title');
+            }
+        }
+    });
+
+// Похожие новости на странице новости
+    $('.js-related-news-slider').slick({
+        infinite: true,
+        autoplay: false,
+        dots: false,
+        arrows: true,
+        slidesToShow: 3,
+        slidesToScroll: 3,
+        appendArrows: $('.section__arrow'),
+        prevArrow: $('.related-slider-arrows .js-arrow-prev'),
+        nextArrow: $('.related-slider-arrows .js-arrow-next'),
+        responsive: [
+            {
+                breakpoint: 540,
+                settings: {
+                    variableWidth: false,
+                    swipeToSlide: true,
+                    centerMode: false,
+                    arrows: false,
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    infinite: true,
+                    dots: true
+                }
+            },
+        ]
+    });
+});
+
+// Подписи фото в новости
+$(function ($) {
+    newsImg = $(".news-content img");
+
+    newsImg.wrap(function () {
+        imgTitle = $(this).attr("title");
+        imgTitle = '';
+        float = $(this).attr("align");
+        if (float == undefined) {
+            float = $(this).css("float");
+        }
+        if ($(this).css("width") == "720px") {
+            $(this).css("width", "100%");
+            $(this).css("height", "");
+        }
+
+        return "<div class=\"b-detail__img\" style='float:" + float + ";overflow: hidden;margin:0 10px 0 10px'></div>";
+    });
+
+    newsImg.after(function () {
+        var imgSign = '';
+        var imgTitle = $(this).attr("title");
+        var imgCredit = $(this).attr("rel-credit");
+
+        if (imgTitle && imgCredit) {
+            imgSign = imgCredit + ': ' + imgTitle;
+        } else if (imgTitle) {
+            imgSign = imgTitle;
+        } else if (imgCredit) {
+            imgSign = imgCredit;
+        }
+
+        return "<span>" + imgSign + "</span>";
+    });
+
+    newsImg.each(function () {
+        if ($(this).width() > 300) {
+            $(this).magnificPopup({
+                type: 'image',
+                closeOnContentClick: true,
+                items: {
+                    src: $(this).attr('src')
+                },
+                image: {
+                    verticalFit: true
+                }
+            });
+        }
+    });
+});
+
+// Подписи к галеерее фото
+setTimeout(function () {
+    var $sliders = $('.js-slider-typography');
+    $sliders.each(function () {
+        $(this).find('.slick-slide img').each(function () {
+            var alt = $(this).attr('alt');
+            if (alt != '') {
+                $(this).after('<div class="img-sign">' + alt + '</div>');
+            }
+        })
+    });
+}, 2000);

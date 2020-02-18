@@ -1,0 +1,222 @@
+$(document).ready(function () {
+    hideNewsMoreButton($('.js-news-show-more'));
+
+    // Закрыть алерт на сайте
+    $('.b-alert__close').on('click', function () {
+        $('.b-alert').hide();
+    });
+
+    // Lazy load для изображений
+    [].forEach.call(document.querySelectorAll('img[data-src]'), function (img) {
+        img.setAttribute('src', img.getAttribute('data-src'));
+        img.onload = function () {
+            img.removeAttribute('data-src');
+        };
+    });
+
+    // Баннер в ленте
+    $('.js-aside-banners-slider--top, .js-aside-banners-slider--middle, .js-aside-banners-slider--bottom').slick({
+        infinite: true,
+        autoplay: true,
+        autoplaySpeed: 3000,
+        dots: false,
+        arrows: false,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        adaptiveHeight: false
+    });
+
+
+    // Слайдер телека
+    $('.js-news-tv-slider').slick({
+        infinite: true,
+        autoplay: false,
+        autoplaySpeed: 4000,
+        dots: false,
+        arrows: true,
+        slidesToShow: 3,
+        slidesToScroll: 3,
+        appendArrows: $('.section__arrow--tv'),
+        prevArrow: $('.section__arrow--tv .js-arrow-prev'),
+        nextArrow: $('.section__arrow--tv .js-arrow-next'),
+        responsive: [
+            {
+                breakpoint: 540,
+                settings: {
+                    variableWidth: false,
+                    swipeToSlide: true,
+                    centerMode: false,
+                    arrows: false,
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    infinite: true,
+                    dots: true
+                }
+            },
+        ]
+    });
+
+    // Потолкуем на Главной
+    $('.js-news-authors-slider').slick({
+        infinite: true,
+        autoplay: false,
+        autoplaySpeed: 4000,
+        dots: false,
+        arrows: true,
+        slidesToShow: 3,
+        slidesToScroll: 3,
+        appendArrows: $('.section__arrow--authors'),
+        prevArrow: $('.section__arrow--authors .js-arrow-prev'),
+        nextArrow: $('.section__arrow--authors .js-arrow-next'),
+        responsive: [
+            {
+                breakpoint: 540,
+                settings: {
+                    variableWidth: false,
+                    swipeToSlide: true,
+                    centerMode: false,
+                    arrows: false,
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    infinite: true,
+                    dots: true
+                }
+            },
+        ]
+    });
+
+    // Сохранять показ баннера в статистику
+    $('.b-promo img').each(function () {
+        if ($(this).is(':visible')) {
+            var id = $(this).parent().parent().data('id');
+            if (id > 0) {
+                $.post("/site/save-banner-show?id=" + id, function (data) {
+                });
+            }
+        }
+    });
+
+    // Сохранять клик по баннеру в статистику
+    $('.b-promo a').on('click', function (e) {
+        var id = $(this).parent().data('id');
+        $.post("/site/save-banner-click?id=" + id, function (data) {
+        });
+    });
+
+    $('.js-news-show-more').click(function () {
+        var $this = $(this);
+        var $container = $($(this).data('container'));
+
+        if ($container.length == 0) {
+            $container = $('.js-news-list');
+        }
+
+        var $view = $(this).data('view');
+        loadMoreNews($this, $container, $view);
+    });
+
+    $('.js-hide-news').on('click', function () {
+        var $newsContainer = $('.js-news-list');
+        $(this).addClass('el-hidden');
+        $newsContainer.css('display', 'none');
+    });
+
+    $('.js-hide-news-deeper').on('click', function () {
+        var $deeperButtons = $('.js-button-deeper');
+        var $newsContainer = $('.js-deeper-text');
+        $(this).hide();
+        $newsContainer.hide();
+        $(window).scrollTop($deeperButtons.offset().top);
+
+        $deeperButtons.find('span').text('Читать полностью');
+        $deeperButtons.find('.button-arrow').removeClass('button-arrow--rotated');
+    });
+
+    $('.js-button-deeper').on('click', function () {
+        var news_id = $(this).data('id');
+        var $deeper_text = $('.js-deeper-text-' + news_id);
+
+        if ($deeper_text.is(':visible')) {
+            $deeper_text.hide();
+            $(this).find('span').text('Читать полностью');
+            $(this).find('.button-arrow').removeClass('button-arrow--rotated');
+            $(window).scrollTop($(this).offset().top - 200);
+            $('.js-hide-news-deeper').hide();
+        } else {
+            $deeper_text.show();
+            $(this).find('span').text('Скрыть текст');
+            $(this).find('.button-arrow').addClass('button-arrow--rotated');
+            $('.js-hide-news-deeper').show();
+
+            $(document).scroll(function () {
+                newsFeedButtonHide($deeper_text, $('.js-hide-news-deeper'));
+            });
+        }
+    });
+});
+
+function hideNewsMoreButton($button) {
+    var $this = $button;
+    var page = $this.data('page');
+    var maxPage = $this.data('max-page');
+    var perPage = $this.data('per-page');
+    var maxNewsCount = $this.data('max-count');
+
+    if (page == maxPage || maxPage == 0 || maxPage == 1) {
+        $this.hide();
+    } else {
+        $this.show();
+    }
+}
+
+function loadMoreNews($button, $container, view, newsFeedHidden) {
+    var $this = $button;
+    var $newsContainer = $container;
+    var url = $this.data('url');
+    var page = $this.data('page');
+    var perPage = $this.data('per-page');
+
+    var buttonText = $this.text();
+    $this.attr('disabled', 'disabled');
+    $this.html("<i class='fa fa-spinner fa-spin'></i>");
+
+    $.get(url, {'view': view, 'page': page + 1, 'perPage': perPage}, function (data) {
+        if (data != '') {
+
+            if ($this.hasClass('js-news-block-flex')) {
+                $container.css('display', 'flex');
+            } else {
+                $container.css('display', 'block');
+            }
+
+            $('.js-hide-news').removeClass('el-hidden');
+            $this.removeAttr('disabled');
+            $this.html(buttonText);
+
+            $this.data('page', page + 1);
+            $newsContainer.append(data);
+        }
+
+        hideNewsMoreButton($this);
+    });
+
+    $(document).scroll(function () {
+        newsFeedButtonHide($('.js-news-list'), $('.js-hide-news'));
+    });
+}
+
+function newsFeedButtonHide($el, $button) {
+    if ($el.is(':visible')) {
+        var target = $el;
+        var targetPos = target.offset().top;
+        var winHeight = $(window).height();
+        var scrollToElem = targetPos - winHeight;
+        var winScrollTop = $(this).scrollTop();
+
+        if (winScrollTop < scrollToElem || winScrollTop > scrollToElem + target.height() + 100) {
+            $button.hide();
+        } else {
+            $button.show();
+        }
+    }
+}

